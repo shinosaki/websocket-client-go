@@ -17,13 +17,13 @@ type WebSocketClient struct {
 	wg        sync.WaitGroup
 	ctx       context.Context
 	cancel    context.CancelFunc
-	onOpen    func(ws *WebSocketClient)
+	onOpen    func(ws *WebSocketClient, isReconnecting bool)
 	onClose   func(ws *WebSocketClient, isReconnecting bool)
 	onMessage func(ws *WebSocketClient, payload []byte)
 }
 
 func NewWebSocketClient(
-	onOpen func(ws *WebSocketClient),
+	onOpen func(ws *WebSocketClient, isReconnecting bool),
 	onClose func(ws *WebSocketClient, isReconnecting bool),
 	onMessage func(ws *WebSocketClient, payload []byte),
 ) *WebSocketClient {
@@ -41,6 +41,7 @@ func (ws *WebSocketClient) Connect(
 	webSocketUrl string,
 	attempts int,
 	interval time.Duration,
+	isReconnecting bool,
 ) (err error) {
 	ws.URL, err = url.Parse(webSocketUrl)
 	if err != nil {
@@ -61,7 +62,7 @@ func (ws *WebSocketClient) Connect(
 	}
 
 	if ws.onOpen != nil {
-		ws.onOpen(ws)
+		ws.onOpen(ws, isReconnecting)
 	}
 
 	// Message Handler
@@ -103,7 +104,7 @@ func (ws *WebSocketClient) Disconnect(isReconnecting bool) {
 func (ws *WebSocketClient) Reconnect(url string, attempts int, interval time.Duration) error {
 	ws.Disconnect(true)
 	ws.ctx, ws.cancel = context.WithCancel(context.Background())
-	return ws.Connect(url, attempts, interval)
+	return ws.Connect(url, attempts, interval, true)
 }
 
 func (ws *WebSocketClient) SendJSON(v any) error {

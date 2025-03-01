@@ -16,8 +16,12 @@ const (
 func main() {
 	ws := websocket.NewWebSocketClient(
 		// onOpen
-		func(ws *websocket.WebSocketClient) {
-			log.Println("Connected")
+		func(ws *websocket.WebSocketClient, isReconnecting bool) {
+			if isReconnecting {
+				log.Println("Reconnected")
+			} else {
+				log.Println("Connected")
+			}
 		},
 
 		// onClose
@@ -36,7 +40,7 @@ func main() {
 	)
 
 	// Connect to server
-	if err := ws.Connect(WEBSOCKET_URL, ATTEMPTS, INTERVAL); err != nil {
+	if err := ws.Connect(WEBSOCKET_URL, ATTEMPTS, INTERVAL, false); err != nil {
 		log.Println("Failed to connect:", err)
 	}
 
